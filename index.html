@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Canvas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="toolbar">
+            <label for="pencil-size">Pencil Size:</label>
+            <input type="range" id="pencil-size" min="1" max="50" value="5">
+            
+            <label for="pencil-color">Color:</label>
+            <input type="color" id="pencil-color" value="#000000">
+            
+            <button id="clear-btn">Clear Canvas</button>
+            
+            <input type="file" id="image-upload" accept="image/*">
+            <label for="image-upload" class="upload-btn">Upload Image</label>
+            
+            <button id="save-btn">Save Drawing</button>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="drawing-canvas"></canvas>
+        </div>
+        
+        <div class="instructions">
+            <p>Drag to draw | Hold spacebar and drag to pan | Mouse wheel to zoom</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
