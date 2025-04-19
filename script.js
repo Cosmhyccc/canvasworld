@@ -10,6 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearBtn = document.getElementById('clear-btn');
     const imageUpload = document.getElementById('image-upload');
     const saveBtn = document.getElementById('save-btn');
+    const undoBtn = document.getElementById('undo-btn');
+
+    // Undo stack
+    const historyStack = [];
+    const maxHistory = 50;
+
+    function saveState() {
+        // Save current canvas state as image data
+        if (historyStack.length >= maxHistory) historyStack.shift();
+        historyStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    }
+
+    function restoreState() {
+        if (historyStack.length > 1) {
+            historyStack.pop(); // Remove current state
+            const prev = historyStack[historyStack.length - 1];
+            ctx.putImageData(prev, 0, 0);
+        }
+    }
     
     // Canvas state
     let isDrawing = false;
@@ -49,9 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Drawing functions
     function startDrawing(e) {
         if (isPanning) return;
-        
         isDrawing = true;
-        
+        // Save state before starting a new stroke
+        saveState();
         // Calculate position in the transformed canvas
         const rect = canvas.getBoundingClientRect();
         lastX = (e.clientX - rect.left) / scale;
@@ -60,22 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function draw(e) {
         if (!isDrawing) return;
-        
         // Calculate position in the transformed canvas
         const rect = canvas.getBoundingClientRect();
         const currentX = (e.clientX - rect.left) / scale;
         const currentY = (e.clientY - rect.top) / scale;
-        
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
         ctx.lineWidth = pencilSize.value;
         ctx.strokeStyle = pencilColor.value;
-        
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(currentX, currentY);
         ctx.stroke();
-        
         lastX = currentX;
         lastY = currentY;
     }
@@ -140,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function uploadImage(e) {
         const file = e.target.files[0];
         if (!file || !file.type.match('image.*')) return;
-        
+        saveState(); // Save state before image upload
         const reader = new FileReader();
         reader.onload = function(event) {
             const img = new Image();
@@ -148,24 +163,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Calculate maximum dimensions (keep images smaller)
                 const maxWidth = 500;
                 const maxHeight = 500;
-                
                 let width = img.width;
                 let height = img.height;
-                
                 // Scale down if image is too large
                 if (width > maxWidth || height > maxHeight) {
                     const ratio = Math.min(maxWidth / width, maxHeight / height);
                     width *= ratio;
                     height *= ratio;
                 }
-                
                 // Calculate position to center the image
                 const posX = (canvas.width / 2) - (width / 2);
                 const posY = (canvas.height / 2) - (height / 2);
-                
                 // Draw image on canvas
                 ctx.drawImage(img, posX, posY, width, height);
-                
                 // Center view on the image
                 offsetX = posX;
                 offsetY = posY;
@@ -194,6 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     window.addEventListener('mouseup', stopDrawing);
+
+    // Undo button
+    undoBtn.addEventListener('click', restoreState);
+
+    // Save initial state
+    saveState();
     
     // Event listeners for panning (when spacebar is held)
     window.addEventListener('keydown', (e) => {
